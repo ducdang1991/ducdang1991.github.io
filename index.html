@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Countdown Timer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            transition: background 0.5s ease;
+        }
+
+        body.urgent {
+            background: linear-gradient(135deg, #ff4757 0%, #c44569 50%, #ff3742 100%);
+        }
+
+        .container {
+            text-align: center;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .timer {
+            font-size: 4rem;
+            font-weight: bold;
+            margin: 30px 0;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            font-family: 'Courier New', monospace;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin: 30px 0;
+        }
+
+        button {
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 25px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(5px);
+            min-width: 100px;
+        }
+
+        button:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .btn-start {
+            background: rgba(76, 175, 80, 0.3);
+            border-color: rgba(76, 175, 80, 0.5);
+        }
+
+        .btn-start:hover {
+            background: rgba(76, 175, 80, 0.5);
+        }
+
+        .btn-pause {
+            background: rgba(255, 193, 7, 0.3);
+            border-color: rgba(255, 193, 7, 0.5);
+        }
+
+        .btn-pause:hover {
+            background: rgba(255, 193, 7, 0.5);
+        }
+
+        .btn-resume {
+            background: rgba(33, 150, 243, 0.3);
+            border-color: rgba(33, 150, 243, 0.5);
+        }
+
+        .btn-resume:hover {
+            background: rgba(33, 150, 243, 0.5);
+        }
+
+        .input-group {
+            margin: 20px 0;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+
+        input[type="number"] {
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 10px;
+            border-radius: 10px;
+            font-size: 1rem;
+            width: 80px;
+            text-align: center;
+        }
+
+        input[type="number"]:focus {
+            outline: none;
+            border-color: rgba(255, 255, 255, 0.6);
+        }
+
+        input[type="checkbox"] {
+            transform: scale(1.2);
+            margin-right: 10px;
+        }
+
+        .hidden-countdown {
+            color: transparent;
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+            user-select: none;
+        }
+
+        .hidden-countdown::before {
+            content: "●●:●●";
+            color: rgba(255, 255, 255, 0.3);
+            text-shadow: none;
+        }
+
+        .warning {
+            color: #ff6b6b;
+            font-size: 1.2rem;
+            margin-top: 20px;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .finished {
+            color: #ff6b6b;
+            font-size: 1.5rem;
+            animation: flash 0.5s infinite;
+        }
+
+        @keyframes flash {
+            0% { opacity: 1; }
+            50% { opacity: 0.3; }
+            100% { opacity: 1; }
+        }
+
+        .wake-lock-status {
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.8);
+            margin-top: 10px;
+        }
+
+        .wake-lock-active {
+            color: #4CAF50;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Countdown Timer</h1>
+        
+        <div class="input-group">
+            <label for="minutes">Set Minutes:</label>
+            <input type="number" id="minutes" value="10" min="1" max="60">
+        </div>
+
+        <div class="input-group">
+            <label>
+                <input type="checkbox" id="hideCountdown" checked="true" style="margin-right: 10px;">
+                Hide countdown during final 3 minutes
+            </label>
+        </div>
+        
+        <div class="timer" id="timer">10:00</div>
+        
+        <div class="controls">
+            <button id="primaryButton" class="btn-start" onclick="toggleTimer()">Start</button>
+            <button id="resetButton" onclick="resetTimer()">Reset</button>
+        </div>
+        
+        <div id="status"></div>
+        <div id="wakeLockStatus" class="wake-lock-status"></div>
+    </div>
+
+    <script>
+        let timeLeft = 600; // 10 minutes in seconds
+        let isRunning = false;
+        let isPaused = false;
+        let intervalId = null;
+        let audioContext = null;
+        let isPlayingSound = false;
+        let soundInterval = null;
+        let wakeLock = null;
+        let timeUpAlarmTimeout = null; // New variable to track the 3-second timeout
+		document.getElementById('primaryButton').focus();
+
+        // Wake Lock functionality
+        async function requestWakeLock() {
+            try {
+                if ('wakeLock' in navigator) {
+                    wakeLock = await navigator.wakeLock.request('screen');
+                    updateWakeLockStatus('Screen wake lock active - Screen will stay on');
+                    
+                    wakeLock.addEventListener('release', () => {
+                        updateWakeLockStatus('Screen wake lock released');
+                    });
+                } else {
+                    updateWakeLockStatus('Wake Lock API not supported in this browser');
+                }
+            } catch (err) {
+                updateWakeLockStatus(`Failed to activate wake lock: ${err.message}`);
+            }
+        }
+
+        async function releaseWakeLock() {
+            if (wakeLock) {
+                try {
+                    await wakeLock.release();
+                    wakeLock = null;
+                    updateWakeLockStatus('Screen wake lock released');
+                } catch (err) {
+                    updateWakeLockStatus(`Failed to release wake lock: ${err.message}`);
+                }
+            }
+        }
+
+        function updateWakeLockStatus(message) {
+            //const statusElement = document.getElementById('wakeLockStatus');
+            //statusElement.textContent = message;
+            
+            if (message.includes('active')) {
+                // statusElement.classList.add('wake-lock-active');
+            } else {
+                // statusElement.classList.remove('wake-lock-active');
+            }
+        }
+
+        function updateButtonState() {
+            const button = document.getElementById('primaryButton');
+            
+            if (timeLeft <= 0) {
+                // Timer finished
+                button.textContent = 'Start';
+                button.className = 'btn-start';
+                button.disabled = false;
+            } else if (isRunning) {
+                // Timer is running
+                button.textContent = 'Pause';
+                button.className = 'btn-pause';
+                button.disabled = false;
+            } else if (isPaused) {
+                // Timer is paused
+                button.textContent = 'Resume';
+                button.className = 'btn-resume';
+                button.disabled = false;
+            } else {
+                // Timer is stopped/ready to start
+                button.textContent = 'Start';
+                button.className = 'btn-start';
+                button.disabled = false;
+            }
+        }
+
+        // Handle visibility change (when tab becomes hidden/visible)
+        document.addEventListener('visibilitychange', async () => {
+            if (wakeLock !== null && document.visibilityState === 'visible' && isRunning) {
+                await requestWakeLock();
+            }
+        });
+
+        function updateDisplay() {
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            const timeString = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            
+            const timerElement = document.getElementById('timer');
+            const hideCountdown = document.getElementById('hideCountdown').checked;
+            
+            // Change background to urgent red when 60 seconds or less remain
+            if (timeLeft <= 60 && timeLeft > 0) {
+                document.body.classList.add('urgent');
+            } else {
+                document.body.classList.remove('urgent');
+            }
+            
+            // Hide countdown if checkbox is checked and we're in final 3 minutes
+            if (hideCountdown && timeLeft <= 180 && timeLeft > 0) {
+                timerElement.classList.add('hidden-countdown');
+                timerElement.textContent = timeString; // Still set for accessibility
+            } else {
+                timerElement.classList.remove('hidden-countdown');
+                timerElement.textContent = timeString;
+            }
+            
+            // Update button state
+            updateButtonState();
+        }
+
+        function createBeep() {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.frequency.value = 800; // 800 Hz beep
+            oscillator.type = 'sine';
+            
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+            
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.3);
+        }
+
+        function createTimeUpAlarm() {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            
+            // Create a multi-tone alarm sound
+            const frequencies = [1000, 1200, 800, 1400]; // Multiple frequencies for urgent sound
+            const duration = 0.8; // Longer duration for each beep
+            
+            frequencies.forEach((freq, index) => {
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.value = freq;
+                oscillator.type = 'sawtooth'; // Harsher sound than sine
+                
+                const startTime = audioContext.currentTime + (index * 0.1);
+                const endTime = startTime + duration;
+                
+                gainNode.gain.setValueAtTime(0.5, startTime); // Louder volume
+                gainNode.gain.exponentialRampToValueAtTime(0.01, endTime);
+                
+                oscillator.start(startTime);
+                oscillator.stop(endTime);
+            });
+        }
+
+        function startContinuousSound() {
+            if (!isPlayingSound) {
+                isPlayingSound = true;
+                soundInterval = setInterval(() => {
+                    createBeep();
+                }, 1000); // Beep every second
+            }
+        }
+
+        function startTimeUpAlarm() {
+            if (!isPlayingSound) {
+                isPlayingSound = true;
+                soundInterval = setInterval(() => {
+                    createTimeUpAlarm();
+                }, 500); // Alarm every 500ms
+                
+                // Stop the alarm after 3 seconds
+                timeUpAlarmTimeout = setTimeout(() => {
+                    stopContinuousSound();
+					resetTimer();
+                }, 3000);
+            }
+        }
+
+        function stopContinuousSound() {
+            if (isPlayingSound) {
+                isPlayingSound = false;
+                if (soundInterval) {
+                    clearInterval(soundInterval);
+                    soundInterval = null;
+                }
+                // Clear the timeout if it exists
+                if (timeUpAlarmTimeout) {
+                    clearTimeout(timeUpAlarmTimeout);
+                    timeUpAlarmTimeout = null;
+                }
+            }
+        }
+
+        async function toggleTimer() {
+            if (timeLeft <= 0) {
+                // If timer finished, reset and start new timer
+                await resetTimer();
+                await startTimer();
+            } else if (isRunning) {
+                // If running, pause it
+                await pauseTimer();
+            } else {
+                // If stopped or paused, start/resume it
+                await startTimer();
+            }
+        }
+
+        async function startTimer() {
+            if (!isRunning) {
+                isRunning = true;
+                isPaused = false;
+                updateDisplay();
+				document.getElementById('primaryButton').focus();
+				document.getElementById('status').innerHTML = 'Timer Start</div>';
+                
+                // Request wake lock when starting timer
+                await requestWakeLock();
+                
+                intervalId = setInterval(() => {
+                    timeLeft--;
+                    updateDisplay();
+					document.getElementById('status').innerHTML = 'Timer Start</div>';
+                    
+					if (timeLeft > 60)
+						document.getElementById('status').innerHTML = 'Timer Start</div>';
+                    // Start continuous sound when 60 seconds or less remain
+                    if (timeLeft <= 60 && timeLeft > 0 && !isPlayingSound) {
+                        startContinuousSound();
+                        document.getElementById('status').innerHTML = 
+                            '<div class="warning">⚠️ Final 1 minute - Sound alert active!</div>';
+                    }
+                    
+                    if (timeLeft <= 0) {
+                        timeLeft = 0;
+                        isRunning = false;
+                        isPaused = false;
+                        clearInterval(intervalId);
+                        updateDisplay();
+                        document.getElementById('status').innerHTML = 
+                            '<div class="finished">⏰ Time\'s Up!</div>';
+                        
+                        // Stop regular beeping and start 3-second alarm
+                        stopContinuousSound();
+                        startTimeUpAlarm();
+                        
+                        // Release wake lock when timer finishes
+                        releaseWakeLock();
+                    }
+                }, 1000);
+            }
+        }
+
+        async function pauseTimer() {
+            if (isRunning) {
+                isRunning = false;
+                isPaused = true;
+                clearInterval(intervalId);
+                stopContinuousSound();
+                document.getElementById('status').innerHTML = '<div>Timer Paused</div>';
+                updateDisplay();
+                
+                // Release wake lock when pausing
+                await releaseWakeLock();
+            }
+        }
+
+        async function resetTimer() {
+            isRunning = false;
+            isPaused = false;
+            clearInterval(intervalId);
+            stopContinuousSound();
+            
+            const minutes = parseInt(document.getElementById('minutes').value) || 10;
+            timeLeft = minutes * 60;
+            updateDisplay();
+            document.getElementById('status').innerHTML = '';
+			document.getElementById('primaryButton').focus();
+            
+            // Remove hidden countdown class when resetting
+            document.getElementById('timer').classList.remove('hidden-countdown');
+            
+            // Remove urgent background when resetting
+            document.body.classList.remove('urgent');
+            
+            // Release wake lock when resetting
+            await releaseWakeLock();
+        }
+
+        // Initialize display
+        updateDisplay();
+        
+        // Allow Enter key to toggle timer
+        document.addEventListener('keypress', function(e) {
+            if (e.key === 'r') {
+                resetTimer();
+                toggleTimer();
+            } else if (e.key == "s") {
+                toggleTimer();
+            }
+        });
+
+        // Update timer when minutes input changes
+        document.getElementById('minutes').addEventListener('change', function() {
+            if (!isRunning && !isPaused) {
+                resetTimer();
+            }
+        });
+
+        // Initialize wake lock status
+        if ('wakeLock' in navigator) {
+            updateWakeLockStatus('Wake Lock API available - Screen will stay on during timer');
+        } else {
+            updateWakeLockStatus('Wake Lock API not supported in this browser');
+        }
+    </script>
+</body>
+</html>
