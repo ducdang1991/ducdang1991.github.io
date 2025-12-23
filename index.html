@@ -25,6 +25,10 @@
         body.urgent {
             background: linear-gradient(135deg, #ff4757 0%, #c44569 50%, #ff3742 100%);
         }
+		
+		body.paused {
+			background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+		}
 
         .container {
             text-align: center;
@@ -225,6 +229,75 @@
         let timeUpAlarmTimeout = null; // New variable to track the 3-second timeout
 		document.getElementById('primaryButton').focus();
 
+        // --- Auto Start/Resume after inactivity ---
+        let inactivityTimer = null;
+        let INACTIVITY_LIMIT = 60000; // 60 seconds by default
+        let isExtendedLimit = false; // To track toggle state
+
+        async function resetInactivityTimer() {
+            clearTimeout(inactivityTimer);
+            inactivityTimer = setTimeout(() => {
+                if (!isRunning && timeLeft > 0) {
+                    if (isPaused) {
+                        console.log(`Auto-resume after ${INACTIVITY_LIMIT / 1000}s inactivity...`);
+                        startTimer();
+                        document.getElementById('status').innerHTML = `<div>Auto Resumed after ${INACTIVITY_LIMIT / 1000}s inactivity</div>`;
+                    } else if (!isRunning && timeLeft === (parseInt(document.getElementById('minutes').value) * 60)) {
+                        console.log(`Auto-start after ${INACTIVITY_LIMIT / 1000}s inactivity...`);
+                        startTimer();
+                        document.getElementById('status').innerHTML = `<div>Auto Started after ${INACTIVITY_LIMIT / 1000}s inactivity</div>`;
+                    }
+                }
+            }, INACTIVITY_LIMIT);
+        }
+
+        // --- Wake Lock functionality (unchanged) ---
+        async function requestWakeLock() {
+            try {
+                if ('wakeLock' in navigator) {
+                    wakeLock = await navigator.wakeLock.request('screen');
+                    updateWakeLockStatus('Screen wake lock active - Screen will stay on');
+                    wakeLock.addEventListener('release', () => updateWakeLockStatus('Screen wake lock released'));
+                } else {
+                    updateWakeLockStatus('Wake Lock API not supported in this browser');
+                }
+            } catch (err) {
+                updateWakeLockStatus(`Failed to activate wake lock: ${err.message}`);
+            }
+        }
+
+        async function releaseWakeLock() {
+            if (wakeLock) {
+                try {
+                    await wakeLock.release();
+                    wakeLock = null;
+                    updateWakeLockStatus('Screen wake lock released');
+                } catch (err) {
+                    updateWakeLockStatus(`Failed to release wake lock: ${err.message}`);
+                }
+            }
+        }
+
+        function updateWakeLockStatus(msg) {}
+
+        async function resetInactivityTimer() {
+            clearTimeout(inactivityTimer);
+            inactivityTimer = setTimeout(() => {
+                // If timer hasn't started or is paused, start/resume automatically
+                if (!isRunning && (timeLeft > 0)) {
+                    if (isPaused) {
+                        console.log("Auto-resume after 60s inactivity...");
+                        startTimer();
+                        document.getElementById('status').innerHTML = '<div>Auto Resumed after 60s inactivity</div>';
+                    } else if (!isRunning && timeLeft === (parseInt(document.getElementById('minutes').value) * 60)) {
+                        console.log("Auto-start after 60s inactivity...");
+                        startTimer();
+                        document.getElementById('status').innerHTML = '<div>Auto Started after 60s inactivity</div>';
+                    }
+                }
+            }, INACTIVITY_LIMIT);
+        }
+
         // Wake Lock functionality
         async function requestWakeLock() {
             try {
@@ -423,6 +496,7 @@
             // If currently in reset window and user clicks again — reset timer
             if (isInResetWindow) {
                 clearTimeout(resetWindowTimeout);
+				document.getElementById('minutes').value = 10;
                 isInResetWindow = false;
                 await resetTimer();
                 return;
@@ -442,6 +516,7 @@
             if (!isRunning) {
                 isRunning = true;
                 isPaused = false;
+				document.body.classList.remove('paused');
                 updateDisplay();
 				document.getElementById('primaryButton').focus();
 				document.getElementById('status').innerHTML = 'Timer Start</div>';
@@ -492,6 +567,7 @@
                 isPaused = true;
                 clearInterval(intervalId);
                 stopContinuousSound();
+				document.body.classList.add('paused');
                 document.getElementById('status').innerHTML = '<div>Timer Paused</div>';
                 updateDisplay();
 
@@ -513,6 +589,8 @@
                         button.className = 'btn-resume';
                     }
                 }, 500);
+
+                await resetInactivityTimer();
             }
         }
 
@@ -533,10 +611,35 @@
             
             // Remove urgent background when resetting
             document.body.classList.remove('urgent');
+			document.body.classList.remove('paused');
             
             // Release wake lock when resetting
             await releaseWakeLock();
+			
+            await resetInactivityTimer();
         }
+
+        // --- Add shortcut for toggling inactivity limit ---
+        document.addEventListener('keydown', function(e) {
+            if (e.key.toLowerCase() === 't') {
+                isExtendedLimit = !isExtendedLimit;
+                INACTIVITY_LIMIT = isExtendedLimit ? 600000 : 60000;
+                
+                console.log(`INACTIVITY_LIMIT changed to ${INACTIVITY_LIMIT} ms`);
+                const minutes = INACTIVITY_LIMIT / 60000;
+                document.getElementById('status').innerHTML = 
+                    `<div>⏱️ Inactivity limit set to ${minutes} minute${minutes > 1 ? 's' : ''}</div>`;
+                
+                resetInactivityTimer();
+            } 
+            else if (e.key.toLowerCase() === 'r') {
+                resetTimer();
+                toggleTimer();
+            } 
+            else if (e.key.toLowerCase() === 's') {
+                toggleTimer();
+            }
+        });
 
         // Initialize display
         updateDisplay();
@@ -557,7 +660,7 @@
                 resetTimer();
             }
         });
-
+			
         // Initialize wake lock status
         if ('wakeLock' in navigator) {
             updateWakeLockStatus('Wake Lock API available - Screen will stay on during timer');
