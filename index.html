@@ -5,189 +5,193 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Countdown Timer</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
 
-        body {
-            font-family: 'Arial', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            color: white;
-            transition: background 0.5s ease;
-        }
+body {
+    font-family: 'Arial', sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    transition: background 0.5s ease;
+}
 
-        body.urgent {
-            background: linear-gradient(135deg, #ff4757 0%, #c44569 50%, #ff3742 100%);
-        }
-		
-		body.paused {
-			background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
-		}
+body.urgent {
+    background: linear-gradient(135deg, #ff4757 0%, #c44569 50%, #ff3742 100%);
+}
 
-        .container {
-            text-align: center;
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            padding: 40px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
+body.paused {
+    background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+}
 
-        h1 {
-            font-size: 2.5rem;
-            margin-bottom: 30px;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
-        }
+.container {
+    text-align: center;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    padding: 20px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    min-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
 
-        .timer {
-            font-size: 4rem;
-            font-weight: bold;
-            margin: 30px 0;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
-            font-family: 'Courier New', monospace;
-        }
+h1 {
+    font-size: 5rem;
+    margin-bottom: 30px;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
 
-        .controls {
-            display: flex;
-            gap: 15px;
-            justify-content: center;
-            margin: 30px 0;
-        }
+.timer {
+    font-size: 8rem;
+    font-weight: bold;
+    margin: 30px 0;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+    font-family: 'Courier New', monospace;
+}
 
-        button {
-            background: rgba(255, 255, 255, 0.2);
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            color: white;
-            padding: 12px 24px;
-            border-radius: 25px;
-            font-size: 1rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            backdrop-filter: blur(5px);
-            min-width: 100px;
-        }
+.controls {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    margin: 30px 0;
+}
 
-        button:hover {
-            background: rgba(255, 255, 255, 0.3);
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-        }
+button {
+    background: rgba(255, 255, 255, 0.2);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    padding: 12px 24px;
+    border-radius: 25px;
+    font-size: 2rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(5px);
+    min-width: 100px;
+}
 
-        button:active {
-            transform: translateY(0);
-        }
+button:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
 
-        .btn-start {
-            background: rgba(76, 175, 80, 0.3);
-            border-color: rgba(76, 175, 80, 0.5);
-        }
+button:active {
+    transform: translateY(0);
+}
 
-        .btn-start:hover {
-            background: rgba(76, 175, 80, 0.5);
-        }
+.btn-start {
+    background: rgba(76, 175, 80, 0.3);
+    border-color: rgba(76, 175, 80, 0.5);
+}
 
-        .btn-pause {
-            background: rgba(255, 193, 7, 0.3);
-            border-color: rgba(255, 193, 7, 0.5);
-        }
+.btn-start:hover {
+    background: rgba(76, 175, 80, 0.5);
+}
 
-        .btn-pause:hover {
-            background: rgba(255, 193, 7, 0.5);
-        }
+.btn-pause {
+    background: rgba(255, 193, 7, 0.3);
+    border-color: rgba(255, 193, 7, 0.5);
+}
 
-        .btn-resume {
-            background: rgba(33, 150, 243, 0.3);
-            border-color: rgba(33, 150, 243, 0.5);
-        }
+.btn-pause:hover {
+    background: rgba(255, 193, 7, 0.5);
+}
 
-        .btn-resume:hover {
-            background: rgba(33, 150, 243, 0.5);
-        }
+.btn-resume {
+    background: rgba(33, 150, 243, 0.3);
+    border-color: rgba(33, 150, 243, 0.5);
+}
 
-        .input-group {
-            margin: 20px 0;
-        }
+.btn-resume:hover {
+    background: rgba(33, 150, 243, 0.5);
+}
 
-        label {
-            display: block;
-            margin-bottom: 10px;
-            font-size: 1.1rem;
-        }
+.input-group {
+    margin: 20px 0;
+}
 
-        input[type="number"] {
-            background: rgba(255, 255, 255, 0.2);
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            color: white;
-            padding: 10px;
-            border-radius: 10px;
-            font-size: 1rem;
-            width: 80px;
-            text-align: center;
-        }
+label {
+    display: block;
+    margin-bottom: 10px;
+    font-size: 2.2rem;
+}
 
-        input[type="number"]:focus {
-            outline: none;
-            border-color: rgba(255, 255, 255, 0.6);
-        }
+input[type="number"] {
+    background: rgba(255, 255, 255, 0.2);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    padding: 10px;
+    border-radius: 10px;
+    font-size: 2rem;
+    width: 80px;
+    text-align: center;
+}
 
-        input[type="checkbox"] {
-            transform: scale(1.2);
-            margin-right: 10px;
-        }
+input[type="number"]:focus {
+    outline: none;
+    border-color: rgba(255, 255, 255, 0.6);
+}
 
-        .hidden-countdown {
-            color: transparent;
-            text-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
-            user-select: none;
-        }
+input[type="checkbox"] {
+    transform: scale(1.2);
+    margin-right: 10px;
+}
 
-        .hidden-countdown::before {
-            content: "●●:●●";
-            color: rgba(255, 255, 255, 0.3);
-            text-shadow: none;
-        }
+.hidden-countdown {
+    color: transparent;
+    text-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+    user-select: none;
+}
 
-        .warning {
-            color: #ff6b6b;
-            font-size: 1.2rem;
-            margin-top: 20px;
-            animation: pulse 1s infinite;
-        }
+.hidden-countdown::before {
+    content: "●●:●●";
+    color: rgba(255, 255, 255, 0.3);
+    text-shadow: none;
+}
 
-        @keyframes pulse {
-            0% { opacity: 1; }
-            50% { opacity: 0.5; }
-            100% { opacity: 1; }
-        }
+.warning {
+    color: #ff6b6b;
+    font-size: 2.4rem;
+    margin-top: 20px;
+    animation: pulse 1s infinite;
+}
 
-        .finished {
-            color: #ff6b6b;
-            font-size: 1.5rem;
-            animation: flash 0.5s infinite;
-        }
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
 
-        @keyframes flash {
-            0% { opacity: 1; }
-            50% { opacity: 0.3; }
-            100% { opacity: 1; }
-        }
+.finished {
+    color: #ff6b6b;
+    font-size: 3rem;
+    animation: flash 0.5s infinite;
+}
 
-        .wake-lock-status {
-            font-size: 0.9rem;
-            color: rgba(255, 255, 255, 0.8);
-            margin-top: 10px;
-        }
+@keyframes flash {
+    0% { opacity: 1; }
+    50% { opacity: 0.3; }
+    100% { opacity: 1; }
+}
 
-        .wake-lock-active {
-            color: #4CAF50;
-        }
+.wake-lock-status {
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.8);
+    margin-top: 10px;
+}
+
+.wake-lock-active {
+    color: #4CAF50;
+}
     </style>
 </head>
 <body>
